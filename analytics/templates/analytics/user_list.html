@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block extra_css %}
+<style>
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+</style>
+{% endblock %}
+
+{% block sidebar %}
+<!-- Sidebar hidden -->
+{% endblock %}
+
+{% block content %}
+<div style="padding: 2rem;">
+    <a href="{% url 'analytics:home' %}" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-muted); text-decoration: none; margin-bottom: 1rem; transition: color 0.2s;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Volver al Inicio
+    </a>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 style="margin: 0;">Gestión de Usuarios</h1>
+        <a href="{% url 'analytics:user_create' %}" class="badge badge-A" style="font-size: 1rem; text-decoration: none; padding: 0.75rem 1.5rem;">+ Crear Usuario</a>
+    </div>
+
+    <div class="card" style="padding: 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <th style="padding: 1.5rem; text-align: left;">Usuario</th>
+                    <th style="padding: 1.5rem; text-align: left;">Nombre Completo</th>
+                    <th style="padding: 1.5rem; text-align: left;">Email</th>
+                    <th style="padding: 1.5rem; text-align: center;">Estado</th>
+                    <th style="padding: 1.5rem; text-align: right;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 1.5rem; font-weight: bold;">
+                        <span style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="background: var(--primary); color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">
+                                {{ u.username|make_list|first|upper }}
+                            </span>
+                            {{ u.username }}
+                        </span>
+                    </td>
+                    <td style="padding: 1.5rem;">{{ u.get_full_name }}</td>
+                    <td style="padding: 1.5rem; color: var(--text-muted);">{{ u.email }}</td>
+                    <td style="padding: 1.5rem; text-align: center;">
+                        {% if u.is_active %}
+                        <span class="badge" style="background: rgba(52, 211, 153, 0.2); color: var(--success);">Activo</span>
+                        {% else %}
+                        <span class="badge" style="background: rgba(248, 113, 113, 0.2); color: var(--danger);">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1.5rem; text-align: right;">
+                        <a href="{% url 'analytics:user_edit' u.pk %}" style="text-decoration: none; color: var(--primary); font-weight: 600; padding: 0.5rem 1rem; border-radius: 8px; background: rgba(56, 189, 248, 0.1);">Editar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

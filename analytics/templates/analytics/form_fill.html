@@ -1,0 +1,363 @@
+{% extends 'base.html' %}
+
+{% block sidebar %}
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid px-4 pt-4">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'analytics:form_list' %}" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-muted); text-decoration: none; transition: color 0.2s;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Volver al Inicio
+        </a>
+    </div>
+
+    <div class="form-container">
+        <div class="form-header mb-4">
+            <div>
+                <h1>{{ form_def.title }}</h1>
+                <p style="color: var(--text-muted);">{{ form_def.description }}</p>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="glass-form">
+            {% csrf_token %}
+
+            <!-- Context: Pharmacy Selection -->
+            <div class="form-section highlight">
+                <label for="pharmacy_id" class="label-heading">Farmacia / PDV <span class="required">*</span></label>
+                <div class="select-wrapper">
+                    <select name="pharmacy_id" id="pharmacy_id" class="custom-input" required>
+                        <option value="">Seleccione Farmacia...</option>
+                        {% for pharmacy in pharmacies %}
+                        <option value="{{ pharmacy.id }}">{{ pharmacy.display_name }} ({{ pharmacy.city }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <small class="helper-text">Seleccione la farmacia donde está realizando la visita.</small>
+            </div>
+
+            <!-- Dynamic Fields -->
+            {% for field in fields %}
+                
+                {% if field.field_type == 'SECTION_HEADER' %}
+                    <div class="section-divider">
+                        <h3>{{ field.label }}</h3>
+                    </div>
+                
+                {% elif field.field_type == 'BOOL' %}
+                    <div class="form-group checkbox-group">
+                        <label class="custom-checkbox">
+                            <input type="checkbox" id="{{ field.code }}" name="{{ field.code }}">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">{{ field.label }} {% if field.required %}<span class="required">*</span>{% endif %}</span>
+                        </label>
+                    </div>
+
+                {% elif field.field_type == 'SELECT' %}
+                    <div class="form-group">
+                        <label for="{{ field.code }}">{{ field.label }} {% if field.required %}<span class="required">*</span>{% endif %}</label>
+                        <div class="select-wrapper">
+                            <select class="custom-input" id="{{ field.code }}" name="{{ field.code }}" {% if field.required %}required{% endif %}>
+                                <option value="">Seleccionar...</option>
+                                {% for option in field.catalog.options.all %}
+                                <option value="{{ option.code }}">{{ option.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                
+                {% elif field.field_type == 'MULTI_SELECT' %}
+                    <div class="form-group">
+                        <label class="field-label">{{ field.label }} {% if field.required %}<span class="required">*</span>{% endif %}</label>
+                        <div class="multi-select-grid">
+                            {% for option in field.catalog.options.all %}
+                            <label class="custom-checkbox small">
+                                <input type="checkbox" id="{{ field.code }}_{{ option.code }}" name="{{ field.code }}" value="{{ option.code }}">
+                                <span class="checkmark"></span>
+                                <span class="checkbox-label">{{ option.label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                {% elif field.field_type == 'INT' %}
+                     <div class="form-group">
+                        <label for="{{ field.code }}">{{ field.label }} {% if field.required %}<span class="required">*</span>{% endif %}</label>
+                        <input type="number" class="custom-input" id="{{ field.code }}" name="{{ field.code }}" {% if field.min_value is not None %}min="{{ field.min_value }}"{% endif %} {% if field.max_value is not None %}max="{{ field.max_value }}"{% endif %} {% if field.required %}required{% endif %}>
+                    </div>
+                
+                {% elif field.field_type == 'PHOTO' %}
+                     <div class="form-group">
+                        <label>{{ field.label }}</label>
+                        <div class="file-drop-zone">
+                            <span>Funcionalidad móvil</span>
+                            <small>{{ field.help_text }}</small>
+                        </div>
+                    </div>
+
+                {% else %}
+                    <!-- Default Text -->
+                    <div class="form-group">
+                        <label for="{{ field.code }}">{{ field.label }} {% if field.required %}<span class="required">*</span>{% endif %}</label>
+                        <input type="text" class="custom-input" id="{{ field.code }}" name="{{ field.code }}" {% if field.required %}required{% endif %}>
+                    </div>
+                {% endif %}
+
+            {% endfor %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">
+                    Finalizar Visita
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Override base layout to remove sidebar gap */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .btn-link {
+        color: rgba(255,255,255,0.6) !important;
+        transition: color 0.2s;
+    }
+
+    .hover-white:hover {
+        color: white !important;
+    }
+
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .form-header {
+        display: block;
+        margin-bottom: 2rem;
+    }
+
+    .glass-form {
+        background: var(--bg-card);
+        border: var(--glass-border);
+        border-radius: var(--radius);
+        padding: 2rem;
+        box-shadow: var(--glass-shadow);
+        backdrop-filter: blur(12px);
+    }
+
+    .form-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .highlight {
+        background: rgba(56, 189, 248, 0.05); /* very light primary tint */
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px dashed rgba(56, 189, 248, 0.3);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    label {
+        display: block;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+    
+    .label-heading {
+        color: var(--primary);
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .custom-input {
+        width: 100%;
+        background: rgba(15, 23, 42, 0.6); /* Slightly darker than card */
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 0.8rem 1rem;
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 1rem;
+        transition: all 0.2s;
+    }
+
+    .custom-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        background: rgba(15, 23, 42, 0.8);
+    }
+
+    /* Custom Checkbox */
+    .checkbox-group {
+        margin: 1.5rem 0;
+    }
+
+    .custom-checkbox {
+        display: flex;
+        align-items: center;
+        position: relative;
+        padding-left: 35px;
+        cursor: pointer;
+        user-select: none;
+        color: var(--text-main);
+    }
+
+    .custom-checkbox input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+
+    .checkmark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 24px;
+        width: 24px;
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+
+    .custom-checkbox:hover input ~ .checkmark {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .custom-checkbox input:checked ~ .checkmark {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .checkmark:after {
+        content: "";
+        position: absolute;
+        display: none;
+    }
+
+    .custom-checkbox input:checked ~ .checkmark:after {
+        display: block;
+    }
+
+    .custom-checkbox .checkmark:after {
+        left: 8px;
+        top: 4px;
+        width: 6px;
+        height: 12px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+    
+    .multi-select-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        background: rgba(0,0,0,0.2);
+        padding: 1rem;
+        border-radius: 8px;
+    }
+
+    .section-divider {
+        margin: 2.5rem 0 1.5rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 0.5rem;
+    }
+
+    .section-divider h3 {
+        color: var(--text-main);
+        font-size: 1.25rem;
+        margin: 0;
+    }
+
+    .required {
+        color: var(--accent);
+    }
+    
+    .helper-text {
+        display: block;
+        margin-top: 0.5rem;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    /* File Input Placeholder */
+    .file-drop-zone {
+        border: 2px dashed rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        color: var(--text-muted);
+        background: rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: not-allowed;
+    }
+
+    .form-actions {
+        margin-top: 3rem;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        padding-top: 2rem;
+    }
+
+    .btn-submit {
+        width: 100%;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border: none;
+        padding: 1rem;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(56, 189, 248, 0.4);
+    }
+    
+    .btn-glass {
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        text-decoration: none;
+        color: var(--text-main);
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-glass:hover {
+        background: rgba(255,255,255,0.1);
+        color: white;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="header">
+        <h1>Perfil de Usuario</h1>
+        <p style="color: var(--text-muted);">Información de su cuenta (Solo Lectura)</p>
+    </div>
+
+    <div class="card" style="max-width: 600px; padding: 2rem;">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;">
+            <div style="width: 60px; height: 60px; background: var(--gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold;">
+                {{ request.user.username|make_list|first|upper }}
+            </div>
+            <div>
+                <h2 style="margin: 0; font-size: 1.5rem;">{{ request.user.username }}</h2>
+                <span class="badge badge-A">Activo</span>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div>
+                <label style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Nombre de Usuario</label>
+                <div style="background: rgba(255,255,255,0.05); padding: 0.8rem; border-radius: 8px;">{{ request.user.username }}</div>
+            </div>
+            <div>
+                <label style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Email</label>
+                <div style="background: rgba(255,255,255,0.05); padding: 0.8rem; border-radius: 8px;">{{ request.user.email|default:"No registrado" }}</div>
+            </div>
+            <div>
+                <label style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Fecha de Registro</label>
+                <div style="background: rgba(255,255,255,0.05); padding: 0.8rem; border-radius: 8px;">{{ request.user.date_joined|date:"d M Y" }}</div>
+            </div>
+            <div>
+                <label style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Último Acceso</label>
+                <div style="background: rgba(255,255,255,0.05); padding: 0.8rem; border-radius: 8px;">{{ request.user.last_login|date:"d M Y H:i" }}</div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 2rem;">
+            <label style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Permisos / Grupos</label>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                {% for group in request.user.groups.all %}
+                    <span class="badge badge-B">{{ group.name }}</span>
+                {% empty %}
+                    <span style="color: var(--text-muted); font-style: italic;">Sin grupos asignados</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

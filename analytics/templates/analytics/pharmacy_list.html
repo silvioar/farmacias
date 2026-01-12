@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="header">
+        <h1>Farmacias</h1>
+        <a href="?{{ request.GET.urlencode }}&export=csv" class="badge badge-A" style="text-decoration: none;">Exportar CSV</a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 2rem; padding: 1rem;">
+        <form method="get" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Zona</label>
+                <select name="zone" class="tom-select" multiple placeholder="Todas las Zonas">
+                    {% for zname, zid in zones %}
+                        <option value="{{ zid }}" {% if zid|stringformat:"s" in selected_zones %}selected{% endif %}>{{ zname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="min-width: 150px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Estado</label>
+                <select name="status" class="tom-select" multiple placeholder="Todos">
+                    {% for st in statuses %}
+                        <option value="{{ st }}" {% if st in selected_statuses %}selected{% endif %}>{{ st }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="min-width: 150px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Segmento</label>
+                <select name="segment" class="tom-select" multiple placeholder="Todos">
+                    {% for seg in segments %}
+                        <option value="{{ seg }}" {% if seg in selected_segments %}selected{% endif %}>{{ seg }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="badge badge-A" style="border: none; cursor: pointer; padding: 0.6rem 1.2rem;">Filtrar</button>
+            <a href="." class="badge badge-C" style="border: none; text-decoration: none; padding: 0.6rem 1rem;">Limpiar</a>
+        </form>
+    </div>
+
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>ID Externo</th>
+                    <th>Zona</th>
+                    <th>Estado</th>
+                    <th>Segmento</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pharmacy in pharmacies %}
+                <tr>
+                    <td style="font-weight: 500;">{{ pharmacy.display_name }}</td>
+                    <td><span style="color: var(--text-muted);">{{ pharmacy.external_id }}</span></td>
+                    <td>{{ pharmacy.territory.zone.name }}</td>
+                    <td>
+                        {% if pharmacy.status == 'ACTIVE' %}
+                            <span style="color: var(--success);">• Activa</span>
+                        {% else %}
+                            <span style="color: var(--danger);">• Inactiva</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge badge-{{ pharmacy.segments.cluster }}">{{ pharmacy.segments.cluster }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

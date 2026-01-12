@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+</style>
+{% endblock %}
+
+{% block sidebar %}
+<!-- Sidebar hidden -->
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 80vh; padding: 2rem;">
+    
+    <div style="width: 100%; max-width: 600px; margin-bottom: 1rem;">
+        <a href="{% url 'analytics:user_list' %}" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-muted); text-decoration: none; transition: color 0.2s;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Volver al Listado
+        </a>
+    </div>
+
+    <div class="card" style="width: 100%; max-width: 600px;">
+        <h2 style="margin-bottom: 2rem; text-align: center;">
+            {% if form.instance.pk %}Editar Usuario{% else %}Crear Nuevo Usuario{% endif %}
+        </h2>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">{{ field.label }}</label>
+                {% if field.name == 'permissions' %}
+                    <div style="display: grid; gap: 0.5rem;">
+                        {% for checkbox in field %}
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            {{ checkbox.tag }}
+                            <span style="color: var(--text-main);">{{ checkbox.choice_label }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% elif field.field.widget.input_type == 'checkbox' %}
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="{{ field.name }}" id="{{ field.id_for_label }}"
+                            style="width: 20px; height: 20px; accent-color: var(--primary);" 
+                            {% if field.value %}checked{% endif %}>
+                        <span style="color: var(--text-muted); font-size: 0.9rem;">{{ field.help_text|default:"Activo" }}</span>
+                    </div>
+                {% else %}
+                    <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}"
+                        class="tom-select-replacement" 
+                        style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;" 
+                        {% if field.value %}value="{{ field.value }}"{% endif %}>
+                {% endif %}
+                {% if field.errors %}
+                <div style="color: var(--danger); font-size: 0.8rem; margin-top: 0.5rem;">{{ field.errors.0 }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" style="width: 100%; padding: 1rem; border-radius: 8px; border: none; background: linear-gradient(to right, var(--primary), var(--secondary)); color: white; font-weight: bold; cursor: pointer;">
+                {% if form.instance.pk %}Guardar Cambios{% else %}Crear Usuario{% endif %}
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

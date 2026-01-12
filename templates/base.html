@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaAnalytics Dashboard</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            /* Palette: Deep Ocean & Neon Accents */
+            --bg-dark: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #38bdf8; /* Light Blue */
+            --secondary: #818cf8; /* Indigo */
+            --accent: #f472b6; /* Pink */
+            --success: #34d399;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            
+            --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Tom Select Dark Theme Customization */
+        .ts-wrapper.multi .ts-control {
+            background: var(--bg-dark);
+            border: var(--glass-border);
+            color: var(--text-main);
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+        .ts-wrapper.multi .ts-control > div {
+            background: rgba(56, 189, 248, 0.2);
+            color: var(--primary);
+            border-radius: 4px;
+        }
+        .ts-dropdown {
+            background: var(--bg-card);
+            border: var(--glass-border);
+            color: var(--text-main);
+            backdrop-filter: blur(10px);
+            z-index: 9999 !important; /* Ensure over charts and everything else */
+        }
+        .ts-dropdown .active {
+            background: rgba(255,255,255,0.05);
+            color: white;
+        }
+        .ts-dropdown .option {
+            padding: 8px 12px;
+        }
+        .ts-wrapper.single .ts-control {
+             background: var(--bg-dark);
+            border: var(--glass-border);
+            color: var(--text-main);
+            border-radius: 8px;
+        }
+        .ts-control input {
+            color: white !important;
+        }
+        /* Hide caret if desired, or style it */
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(244, 114, 182, 0.08) 0%, transparent 40%);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: rgba(15, 23, 42, 0.95);
+            border-right: var(--glass-border);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            position: fixed;
+            height: 100vh;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.closed {
+            transform: translateX(-100%);
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+            margin-top: 1rem; /* Space for toggle button if inside */
+        }
+
+        /* Toggle Button */
+        #sidebarToggle {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 20;
+            background: var(--bg-card);
+            border: var(--glass-border);
+            color: var(--text-main);
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            display: flex; /* Always visible */
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            transition: left 0.3s ease;
+        }
+        
+        /* Move button with sidebar if desired, or keep fixed. 
+           Let's keep it fixed at top-left, but maybe adjust loop if sidebar covers it.
+           Actually, sidebar z-index is 10, button is 20, so button is on top. 
+           It functions as a "Show/Hide" toggle.
+        */
+
+        /* ... existing details/summary styles ... */
+        details {
+            margin-bottom: 0.5rem;
+        }
+        details summary {
+            cursor: pointer;
+            padding: 0.8rem 1rem;
+            color: var(--text-muted);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            list-style: none; /* Hide default triangle */
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        details summary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            padding-left: 1.2rem;
+        }
+        details summary::after {
+            content: '+';
+            font-weight: bold;
+        }
+        details[open] summary::after {
+            content: '-';
+        }
+        details[open] summary {
+            color: white;
+        }
+        .dropdown-content {
+            padding-left: 1.5rem;
+            margin-top: 0.2rem;
+        }
+        .nav-item {
+            display: block;
+            padding: 0.6rem 1rem;
+            color: var(--text-muted); /* Reset to muted for child items */
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            width: calc(100% - 260px); /* Adjust width */
+            transition: margin-left 0.3s ease, width 0.3s ease;
+        }
+        
+        .main-content.expanded {
+            margin-left: 0;
+            width: 100%;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        /* Cards & Glassmorphism */
+        .card {
+            background: var(--bg-card);
+            border: var(--glass-border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(12px);
+        }
+
+        /* Grid Layouts */
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* KPI Specifics */
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+            background: linear-gradient(to right, #fff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .kpi-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        th {
+            text-align: left;
+            color: var(--text-muted);
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.95rem;
+        }
+
+        tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        /* Utility */
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-A { background: rgba(56, 189, 248, 0.2); color: var(--primary); }
+        .badge-B { background: rgba(251, 191, 36, 0.2); color: var(--warning); }
+        .badge-C { background: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
+
+    </style>
+    {% block extra_css %}
+    {% endblock %}
+</head>
+<body>
+    {% block sidebar %}
+    <button id="sidebarToggle">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="brand" style="margin-top: 2rem;">PharmaAnalytics</div> <!-- Margin for button -->
+        <div class="nav-links">
+            <details {% if request.resolver_match.url_name in 'dashboard sales_dashboard ops_dashboard' %}open{% endif %}>
+                <summary>Dashboards</summary>
+                <div class="dropdown-content">
+                    <a href="{% url 'analytics:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">General</a>
+                    <a href="{% url 'analytics:sales_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'sales_dashboard' %}active{% endif %}">Ventas</a>
+                    <a href="{% url 'analytics:ops_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'ops_dashboard' %}active{% endif %}">Operaciones</a>
+                </div>
+            </details>
+
+            <details {% if request.resolver_match.url_name in 'pharmacy_list product_list order_master_list' %}open{% endif %}>
+                <summary>Data</summary>
+                <div class="dropdown-content">
+                    <a href="{% url 'analytics:pharmacy_list' %}" class="nav-item {% if request.resolver_match.url_name == 'pharmacy_list' %}active{% endif %}">Farmacias</a>
+                    <a href="{% url 'analytics:product_list' %}" class="nav-item {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}">Productos</a>
+                    <a href="{% url 'analytics:order_master_list' %}" class="nav-item {% if request.resolver_match.url_name == 'order_master_list' %}active{% endif %}">Reporte Detallado</a>
+                </div>
+            </details>
+
+            <details {% if request.resolver_match.url_name == 'profile' %}open{% endif %}>
+                <summary>Configuración</summary>
+                <div class="dropdown-content">
+                    <a href="{% url 'analytics:profile' %}" class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">Perfil</a>
+                </div>
+            </details>
+            <div style="margin-top: auto; padding-top: 2rem;">
+                <a href="{% url 'analytics:home' %}" class="nav-item" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); text-decoration: none; margin-bottom: 0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Volver
+                </a>
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-item" style="width: 100%; border: none; background: transparent; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 0.5rem; color: var(--danger);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        Cerrar Sesión
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+    {% endblock %}
+
+    <main class="main-content" id="mainContent">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Sidebar toggle logic
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            
+            const isClosed = localStorage.getItem('sidebarClosed') === 'true';
+            if (isClosed) {
+                sidebar.classList.add('closed');
+                mainContent.classList.add('expanded');
+            }
+
+            if(toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('closed');
+                    mainContent.classList.toggle('expanded');
+                    localStorage.setItem('sidebarClosed', sidebar.classList.contains('closed'));
+                });
+            }
+
+            // Init Tom Select on all selects with class 'tom-select'
+            document.querySelectorAll('.tom-select').forEach((el) => {
+                new TomSelect(el, {
+                    plugins: ['remove_button'],
+                    create: false,
+                    maxItems: null,
+                    placeholder: el.getAttribute('placeholder') || 'Seleccione...',
+                    valueField: 'value',
+                    labelField: 'text',
+                    searchField: ['text'],
+                    dropdownParent: 'body', // Fix for stacking context/overflow issues
+                });
+            });
+        });
+    </script>
+</body>
+</html>

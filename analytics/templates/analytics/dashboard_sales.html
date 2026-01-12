@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+    <div class="header">
+        <div>
+            <h1>Dashboard Ventas</h1>
+            <p style="color: var(--text-muted);">Análisis detallado de facturación y productos</p>
+        </div>
+        <div>
+            <span class="badge badge-A" style="padding: 0.5rem 1rem;">Cliente: Bioderma Demo</span>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 2rem; padding: 1rem;">
+        <form method="get" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Zona</label>
+                <select name="zone" class="tom-select" multiple placeholder="Todas las Zonas">
+                    {% for zname, zid in filter_zones %}
+                        <option value="{{ zid }}" {% if zid|stringformat:"s" in selected_zones %}selected{% endif %}>{{ zname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="flex: 2; min-width: 250px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Farmacia</label>
+                <select name="pharmacy" class="tom-select" multiple placeholder="Todas las Farmacias">
+                    {% for pname, pid in filter_pharmacies %}
+                        <option value="{{ pid }}" {% if pid|stringformat:"s" in selected_pharmacies %}selected{% endif %}>{{ pname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Fecha Desde</label>
+                <input type="date" name="date_start" value="{{ request.GET.date_start }}" style="background: var(--bg-dark); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.5rem; border-radius: 8px;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Fecha Hasta</label>
+                <input type="date" name="date_end" value="{{ request.GET.date_end }}" style="background: var(--bg-dark); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.5rem; border-radius: 8px;">
+            </div>
+            <button type="submit" class="badge badge-A" style="border: none; cursor: pointer; padding: 0.6rem 1.2rem;">Actualizar</button>
+            <a href="{% url 'analytics:sales_dashboard' %}" class="badge badge-C" style="border: none; text-decoration: none; padding: 0.6rem 1rem;">Limpiar</a>
+        </form>
+    </div>
+
+    <!-- Row 2: Sales Evolution & Zones -->
+    <div class="grid-2">
+        <div class="card">
+            <h3>Facturación Mensual</h3>
+            <canvas id="salesChart" height="200"></canvas>
+        </div>
+        <div class="card">
+            <h3>Pedidos por Zona</h3>
+            <canvas id="zoneChart" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Row 3: Promo & Categories -->
+    <div class="grid-2">
+        <div class="card">
+            <h3>Origen de Pedidos</h3>
+            <div style="height: 250px; display: flex; justify-content: center;">
+                <canvas id="sourceChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Top Combos (Unidades)</h3>
+            <canvas id="comboChart" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Chart Configuration -->
+    <script>
+        // Common Options
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.scale.grid.color = 'rgba(255, 255, 255, 0.05)';
+
+        // 1. Sales Evolution (Bar)
+        new Chart(document.getElementById('salesChart'), {
+            type: 'bar',
+            data: {
+                labels: {{ sales_months|safe }},
+                datasets: [{
+                    label: 'Facturación ($)',
+                    data: {{ sales_values|safe }},
+                    backgroundColor: 'rgba(56, 189, 248, 0.7)',
+                    borderRadius: 4
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+
+        // 2. Zones (Horizontal Bar)
+        new Chart(document.getElementById('zoneChart'), {
+            type: 'bar',
+            indexAxis: 'y',
+            data: {
+                labels: {{ zone_labels|safe }},
+                datasets: [{
+                    label: 'Pedidos',
+                    data: {{ zone_values|safe }},
+                    backgroundColor: 'rgba(52, 211, 153, 0.7)',
+                    borderRadius: 4
+                }]
+            },
+            options: { responsive: true }
+        });
+
+        // 3. Source Mix (Doughnut)
+        new Chart(document.getElementById('sourceChart'), {
+            type: 'doughnut',
+            data: {
+                labels: {{ source_labels|safe }},
+                datasets: [{
+                    data: {{ source_values|safe }},
+                    backgroundColor: ['#f472b6', '#38bdf8', '#fbbf24', '#34d399'],
+                    borderWidth: 0
+                }]
+            },
+            options: { 
+                responsive: true, 
+                cutout: '60%',
+                plugins: { legend: { position: 'right' } }
+            }
+        });
+
+        // 4. Combos (Bar)
+        new Chart(document.getElementById('comboChart'), {
+            type: 'bar',
+            data: {
+                labels: {{ combo_labels|safe }},
+                datasets: [{
+                    label: 'Unidades',
+                    data: {{ combo_values|safe }},
+                    backgroundColor: 'rgba(129, 140, 248, 0.7)',
+                    borderRadius: 4
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+    </script>
+{% endblock %}

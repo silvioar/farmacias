@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block sidebar %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 pt-4">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'analytics:form_list' %}" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-muted); text-decoration: none; transition: color 0.2s;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Volver al Inicio
+        </a>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Cargas Realizadas</h1>
+            <p class="text-muted">Registro completo de visitas y formularios enviados.</p>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Farmacia</th>
+                            <th>Visitador</th>
+                            <th>Formulario</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in submissions %}
+                        <tr>
+                            <td>{{ sub.visit.completed_at|date:"d/m/Y H:i" }}</td>
+                            <td>{{ sub.visit.pharmacy.display_name }} <small class="text-muted">({{sub.visit.pharmacy.city}})</small></td>
+                            <td>{{ sub.visit.rep.user.get_full_name|default:sub.visit.rep.user.username }}</td>
+                            <td>{{ sub.form_definition.title }} <span class="badge badge-light">v{{sub.form_definition.version}}</span></td>
+                            <td>
+                                {% if sub.visit.status == 'COMPLETED' %}
+                                <span class="badge badge-success">Completado</span>
+                                {% else %}
+                                <span class="badge badge-warning">{{ sub.visit.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'analytics:submission_detail' sub.id %}" class="btn-glass secondary" title="Ver Detalle">
+                                    Ver
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">No hay registros de cargas aún.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Override base layout to remove sidebar gap */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .btn-link {
+        color: rgba(255,255,255,0.6) !important;
+        transition: color 0.2s;
+    }
+    
+    .hover-white:hover {
+        color: white !important;
+    }
+    
+    .btn-glass {
+        padding: 0.25rem 0.75rem;
+        border-radius: 8px;
+        text-decoration: none;
+        color: var(--text-main);
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    .btn-glass:hover {
+        background: rgba(255,255,255,0.15);
+        color: var(--primary);
+        text-decoration: none;
+    }
+    .btn-glass.secondary {
+        border-color: rgba(255,255,255,0.1);
+    }
+</style>
+{% endblock %}

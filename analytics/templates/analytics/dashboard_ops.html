@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+    <div class="header">
+        <div>
+            <h1>Dashboard Operaciones</h1>
+            <p style="color: var(--text-muted);">Gestión de visitas y quiebres de stock</p>
+        </div>
+        <div>
+            <span class="badge badge-A" style="padding: 0.5rem 1rem;">Cliente: Bioderma Demo</span>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 2rem; padding: 1rem;">
+        <form method="get" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Zona</label>
+                <select name="zone" class="tom-select" multiple placeholder="Todas las Zonas">
+                    {% for zname, zid in filter_zones %}
+                        <option value="{{ zid }}" {% if zid|stringformat:"s" in selected_zones %}selected{% endif %}>{{ zname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="flex: 2; min-width: 250px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Farmacia</label>
+                <select name="pharmacy" class="tom-select" multiple placeholder="Todas las Farmacias">
+                    {% for pname, pid in filter_pharmacies %}
+                        <option value="{{ pid }}" {% if pid|stringformat:"s" in selected_pharmacies %}selected{% endif %}>{{ pname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Fecha Desde</label>
+                <input type="date" name="date_start" value="{{ request.GET.date_start }}" style="background: var(--bg-dark); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.5rem; border-radius: 8px;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Fecha Hasta</label>
+                <input type="date" name="date_end" value="{{ request.GET.date_end }}" style="background: var(--bg-dark); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.5rem; border-radius: 8px;">
+            </div>
+            <button type="submit" class="badge badge-A" style="border: none; cursor: pointer; padding: 0.6rem 1.2rem;">Actualizar</button>
+            <a href="{% url 'analytics:ops_dashboard' %}" class="badge badge-C" style="border: none; text-decoration: none; padding: 0.6rem 1rem;">Limpiar</a>
+        </form>
+    </div>
+
+    <!-- KPIs Ops -->
+    <div class="grid-4" style="margin-bottom: 2rem;">
+        <div class="card">
+            <div class="kpi-label">Visitas Realizadas</div>
+            <div class="kpi-value">{{ kpi_visits }}</div>
+        </div>
+        <div class="card">
+            <div class="kpi-label">Quiebres Reportados</div>
+            <div class="kpi-value">{{ kpi_oos }}</div>
+        </div>
+        <div class="card">
+            <div class="kpi-label">Duración Promedio</div>
+            <div class="kpi-value">{{ kpi_visit_duration|floatformat:1 }} min</div>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div class="card">
+            <h3>Visitas por Zona</h3>
+            <canvas id="visitsChart" height="200"></canvas>
+        </div>
+        <div class="card">
+            <h3>Quiebres por Fuente</h3>
+            <div style="height: 250px; display: flex; justify-content: center;">
+                <canvas id="oosChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.scale.grid.color = 'rgba(255, 255, 255, 0.05)';
+
+        new Chart(document.getElementById('visitsChart'), {
+            type: 'bar',
+            data: {
+                labels: {{ visits_zone_labels|safe }},
+                datasets: [{
+                    label: 'Visitas',
+                    data: {{ visits_zone_values|safe }},
+                    backgroundColor: 'rgba(52, 211, 153, 0.7)',
+                    borderRadius: 4
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+
+        new Chart(document.getElementById('oosChart'), {
+            type: 'doughnut',
+            data: {
+                labels: {{ oos_source_labels|safe }},
+                datasets: [{
+                    data: {{ oos_source_values|safe }},
+                    backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6'],
+                    borderWidth: 0
+                }]
+            },
+            options: { responsive: true, cutout: '60%', plugins: { legend: { position: 'right' } } }
+        });
+    </script>
+{% endblock %}

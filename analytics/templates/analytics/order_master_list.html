@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+    <div class="header">
+        <div>
+            <h1>Reporte Detallado (Master Query)</h1>
+            <p style="color: var(--text-muted);">Vista granular de transacciones y líneas de venta</p>
+        </div>
+        <div>
+            <a href="?{{ request.GET.urlencode }}&export=csv" class="badge badge-A" style="text-decoration: none;">Exportar CSV</a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 2rem; padding: 1rem;">
+        <form method="get" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 180px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Zona</label>
+                <select name="zone" class="tom-select" multiple placeholder="Todas">
+                    {% for zname, zid in zones %}
+                        <option value="{{ zid }}" {% if zid|stringformat:"s" in selected_zones %}selected{% endif %}>{{ zname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="flex: 1; min-width: 150px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Origen</label>
+                <select name="source" class="tom-select" multiple placeholder="Todos">
+                    {% for src in sources %}
+                        <option value="{{ src }}" {% if src in selected_sources %}selected{% endif %}>{{ src }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="flex: 1; min-width: 180px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Combo</label>
+                <select name="combo" class="tom-select" multiple placeholder="Todos">
+                    <option value="NULL" {% if 'NULL' in selected_combos %}selected{% endif %}>Sin Combo</option>
+                    {% for c in combos %}
+                         <option value="{{ c }}" {% if c in selected_combos %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="min-width: 150px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Retorno</label>
+                <select name="ret_status" class="tom-select" multiple placeholder="Todos">
+                    {% for code, label in return_statuses %}
+                        <option value="{{ code }}" {% if code in selected_ret_statuses %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Fecha Desde</label>
+                <input type="date" name="date_start" value="{{ request.GET.date_start }}" style="background: var(--bg-dark); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.5rem; border-radius: 8px;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Fecha Hasta</label>
+                <input type="date" name="date_end" value="{{ request.GET.date_end }}" style="background: var(--bg-dark); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.5rem; border-radius: 8px;">
+            </div>
+            <button type="submit" class="badge badge-A" style="border: none; cursor: pointer; padding: 0.6rem 1.2rem;">Filtrar</button>
+            <a href="." class="badge badge-C" style="border: none; text-decoration: none; padding: 0.6rem 1rem;">Limpiar</a>
+        </form>
+    </div>
+
+    <div class="card" style="overflow-x: auto;">
+        <table style="min-width: 1500px;">
+            <thead>
+                <tr>
+                    <th>Pedido ID</th>
+                    <th>Fecha</th>
+                    <th>Origen</th>
+                    <th>Estado</th>
+                    <th>Farmacia</th>
+                    <th>Zona</th>
+                    <th>SKU / EAN</th>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Cant</th>
+                    <th>Combo</th>
+                    <th>Cupón</th>
+                    <th>Desc.</th>
+                    <th>Retorno</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for line in object_list %}
+                <tr>
+                    <td style="color: var(--primary);">{{ line.document.external_id }}</td>
+                    <td>{{ line.document.date|date:"d/m/Y H:i" }}</td>
+                    <td>{{ line.document.order_source|default:"-" }}</td>
+                    <td><span class="badge badge-{{ line.document.status }}">{{ line.document.status }}</span></td>
+                    <td style="font-weight: 500;">{{ line.document.pharmacy.display_name }}</td>
+                    <td>{{ line.document.pharmacy.territory.zone.name|default:"-" }}</td>
+                    <td><span style="font-family: monospace;">{{ line.product.sku }}</span></td>
+                    <td>{{ line.product.name }}</td>
+                    <td>{{ line.product.category.name }}</td>
+                    <td style="text-align: center;">{{ line.quantity }}</td>
+                    
+                    <!-- New Fields -->
+                    <td>
+                        {% if line.combo_name %}
+                            <span class="badge badge-B">{{ line.combo_name }}</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if line.document.coupon_code %}
+                            <span style="color: var(--accent);">{{ line.document.coupon_code }}</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if line.discount_coupon_amount > 0 %}
+                            -${{ line.discount_coupon_amount|floatformat:0 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if line.return_status == 'REJECTED' %}
+                            <span style="color: var(--danger);">Rechazado</span>
+                        {% elif line.return_status == 'MISSING' %}
+                            <span style="color: var(--warning);">Faltante</span>
+                        {% else %}
+                            <span style="color: var(--success);">Entregado</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Pagination -->
+        <div style="margin-top: 1rem; display: flex; justify-content: center; gap: 0.5rem;">
+            {% if page_obj.has_previous %}
+                <a href="?{{ current_url_params }}&page={{ page_obj.previous_page_number }}" class="badge badge-C" style="text-decoration: none;">Anterior</a>
+            {% endif %}
+            <span style="color: var(--text-muted);">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a href="?{{ current_url_params }}&page={{ page_obj.next_page_number }}" class="badge badge-C" style="text-decoration: none;">Siguiente</a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

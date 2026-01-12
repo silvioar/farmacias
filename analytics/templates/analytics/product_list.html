@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="header">
+        <h1>Productos</h1>
+        <a href="?{{ request.GET.urlencode }}&export=csv" class="badge badge-A" style="text-decoration: none;">Exportar CSV</a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 2rem; padding: 1rem;">
+        <form method="get" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Categoría</label>
+                <select name="category" class="tom-select" multiple placeholder="Todas">
+                    {% for cname, cid in categories %}
+                        <option value="{{ cid }}" {% if cid|stringformat:"s" in selected_categories %}selected{% endif %}>{{ cname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Marca</label>
+                <select name="brand" class="tom-select" multiple placeholder="Todas">
+                    {% for bname, bid in brands %}
+                        <option value="{{ bid }}" {% if bid|stringformat:"s" in selected_brands %}selected{% endif %}>{{ bname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="badge badge-A" style="border: none; cursor: pointer; padding: 0.6rem 1.2rem;">Filtrar</button>
+            <a href="." class="badge badge-C" style="border: none; text-decoration: none; padding: 0.6rem 1rem;">Limpiar</a>
+        </form>
+    </div>
+
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Marca</th>
+                    <th>Pack Size</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td style="color: var(--primary);">{{ product.sku }}</td>
+                    <td style="font-weight: 500;">{{ product.name }}</td>
+                    <td>{{ product.category.name }}</td>
+                    <td>{{ product.brand.name }}</td>
+                    <td>{{ product.pack_size }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

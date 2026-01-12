@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    .home-card {
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+        height: 250px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.3s ease;
+        background: var(--bg-card);
+        border: var(--glass-border);
+        border-radius: var(--radius);
+        box-shadow: var(--glass-shadow);
+        backdrop-filter: blur(12px);
+    }
+    
+    .home-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .home-card h2 {
+        font-size: 1.5rem;
+        color: var(--text-main);
+        font-weight: 600;
+        margin: 0.5rem 0;
+    }
+
+    .home-card p {
+        color: var(--text-muted);
+        font-size: 1rem;
+        margin-top: 0.25rem;
+    }
+
+    .card-icon {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        transition: transform 0.3s ease;
+    }
+
+    .home-card:hover .card-icon {
+        transform: scale(1.1);
+    }
+
+    .home-card.disabled {
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+    
+    .home-card.disabled:hover {
+        transform: none;
+        box-shadow: var(--glass-shadow);
+        background: var(--bg-card);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block sidebar %}
+{% endblock %}
+
+{% block content %}
+<div style="position: absolute; top: 2rem; right: 2rem; z-index: 100;">
+    <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); color: #fca5a5; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            Cerrar Sesión
+        </button>
+    </form>
+</div>
+
+<div style="display: flex; flex-direction: column; height: 100%; align-items: center; justify-content: center; text-align: center; padding-top: 2rem;">
+    
+    <div style="margin-bottom: 3rem;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            Bienvenido, {{ user.username }}
+        </h1>
+        <p style="color: var(--text-muted); font-size: 1.1rem;">Selecciona una opción para comenzar</p>
+    </div>
+
+    <div class="grid-card-menu" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; width: 100%; max-width: 1000px;">
+        
+        <!-- Card 1: Formulario Visitas -->
+        {% if perms.analytics.view_visits or user.is_superuser %}
+        <a href="{% url 'analytics:form_list' %}" class="home-card">
+            <div class="card-icon" style="color: var(--info);">📝</div>
+            <h2>Formulario de Visitas</h2>
+            <p>Nuevo Relevamiento</p>
+        </a>
+        {% endif %}
+
+        <!-- Card 2: Ruta Optimizada -->
+        {% if perms.analytics.view_routes or user.is_superuser %}
+        <a href="{% url 'routes:optimized_route' %}" class="home-card">
+            <div class="card-icon" style="color: #a855f7;">🗺️</div>
+            <h2>Ruta Optimizada</h2>
+            <p>Ver recorrido</p>
+        </a>
+        {% endif %}
+
+        <!-- Card 3: Dashboard -->
+        {% if perms.analytics.view_dashboard or user.is_superuser %}
+        <a href="{% url 'analytics:dashboard' %}" class="home-card">
+            <div class="card-icon" style="color: var(--primary);">📊</div>
+            <h2>Dashboard</h2>
+            <p>Ver métricas</p>
+        </a>
+        {% endif %}
+
+        <!-- Card 4: Gestión de Usuarios (Admin Only) -->
+        {% if user.is_superuser %}
+        <a href="{% url 'analytics:user_list' %}" class="home-card">
+            <div class="card-icon" style="color: var(--secondary);">👥</div>
+            <h2>Usuarios</h2>
+            <p>Administrar accesos</p>
+        </a>
+        {% endif %}
+
+    </div>
+
+</div>
+{% endblock %}

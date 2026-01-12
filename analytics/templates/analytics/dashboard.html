@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+    <div class="header">
+        <div>
+            <h1>Dashboard General</h1>
+            <p style="color: var(--text-muted);">Overview de performance comercial</p>
+        </div>
+        <div>
+            <span class="badge badge-A" style="padding: 0.5rem 1rem;">Cliente: Bioderma Demo</span>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 2rem; padding: 1rem;">
+        <form method="get" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Zona</label>
+                <select name="zone" class="tom-select" multiple placeholder="Todas las Zonas">
+                    {% for zname, zid in filter_zones %}
+                        <option value="{{ zid }}" {% if zid|stringformat:"s" in selected_zones %}selected{% endif %}>{{ zname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="flex: 2; min-width: 250px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Farmacia</label>
+                <select name="pharmacy" class="tom-select" multiple placeholder="Todas las Farmacias">
+                    {% for pname, pid in filter_pharmacies %}
+                        <option value="{{ pid }}" {% if pid|stringformat:"s" in selected_pharmacies %}selected{% endif %}>{{ pname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Fecha Desde</label>
+                <input type="date" name="date_start" value="{{ request.GET.date_start }}" style="background: var(--bg-dark); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.5rem; border-radius: 8px;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Fecha Hasta</label>
+                <input type="date" name="date_end" value="{{ request.GET.date_end }}" style="background: var(--bg-dark); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.5rem; border-radius: 8px;">
+            </div>
+            <button type="submit" class="badge badge-A" style="border: none; cursor: pointer; padding: 0.6rem 1.2rem;">Actualizar</button>
+            <a href="{% url 'analytics:dashboard' %}" class="badge badge-C" style="border: none; text-decoration: none; padding: 0.6rem 1rem;">Limpiar</a>
+        </form>
+    </div>
+
+    <!-- Row 1: KPIs Cards -->
+    <div class="grid-4">
+        <div class="card">
+            <div class="kpi-label">Facturación Total</div>
+            <div class="kpi-value">${{ kpi_total_sales|floatformat:0|intcomma }}</div>
+        </div>
+        <div class="card">
+            <div class="kpi-label">Farmacias Activas</div>
+            <div class="kpi-value">{{ kpi_pharmacies }}</div>
+        </div>
+        <div class="card">
+            <div class="kpi-label">Visitas Ejecutadas</div>
+            <div class="kpi-value">{{ kpi_visits }}</div>
+        </div>
+        <div class="card">
+            <div class="kpi-label">Quiebres (OOS)</div>
+            <div class="kpi-value">{{ kpi_oos }}</div>
+        </div>
+    </div>
+
+    <!-- Row 1: KPIs Cards -->
+    <div class="grid-4">
+        <div class="card">
+            <div class="kpi-label">Facturación Total</div>
+            <div class="kpi-value">${{ kpi_total_sales|floatformat:0|intcomma }}</div>
+            <div style="font-size: 0.8rem; color: var(--success); margin-top: 0.5rem;">Total acumulado (Filtros)</div>
+        </div>
+        <div class="card">
+            <div class="kpi-label">Farmacias Activas</div>
+            <div class="kpi-value">{{ kpi_pharmacies }}</div>
+        </div>
+        <div class="card">
+            <div class="kpi-label">Visitas Ejecutadas</div>
+            <div class="kpi-value">{{ kpi_visits }}</div>
+        </div>
+        <div class="card">
+            <div class="kpi-label">Quiebres (OOS)</div>
+            <div class="kpi-value">{{ kpi_oos }}</div>
+        </div>
+    </div>
+
+    <!-- Row 2: Table -->
+    <div class="card">
+        <h3>Top 10 Farmacias (Performance)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Farmacia</th>
+                    <th>Segmento</th>
+                    <th>Ventas Totales</th>
+                    <th>Transacciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in top_pharmacies %}
+                <tr>
+                    <td style="font-weight: 500;">{{ p.pharmacy__display_name }}</td>
+                    <td><span class="badge badge-{{ p.pharmacy__segments.cluster }}">{{ p.pharmacy__segments.cluster }}</span></td>
+                    <td>${{ p.total_sales|floatformat:0|intcomma }}</td>
+                    <td>{{ p.ticket_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
