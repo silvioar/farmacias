@@ -5,8 +5,9 @@ from django.utils import timezone
 from django.core.management.base import BaseCommand
 from analytics.models import (
     Client, Region, Zone, Territory, Pharmacy, ProductBrand,
-    ProductCategory, Product, SalesDocument, SalesLine, Visit, Rep
+    ProductCategory, Product, SalesDocument, SalesLine, Rep, CommercialAgreement
 )
+from surveys.models import Visit
 
 class Command(BaseCommand):
     help = 'Genera datos de demostración para el año completo 2025'
@@ -15,6 +16,7 @@ class Command(BaseCommand):
         self.stdout.write("Limpiando datos transaccionales existentes...")
         SalesDocument.objects.all().delete()
         Visit.objects.all().delete()
+        CommercialAgreement.objects.all().delete()
         
         self.stdout.write("Generando datos de demostración para 2025...")
 
@@ -128,14 +130,59 @@ class Command(BaseCommand):
             if pharmacy.territory != pharm_territory:
                 pharmacy.territory = pharm_territory
                 pharmacy.save()
+            
+            # Create Agreement for ~50% of pharmacies
+            if i % 2 == 0:
+                CommercialAgreement.objects.create(
+                    client=client,
+                    pharmacy=pharmacy,
+                    start_date=start_date,
+                    end_date=end_date,
+                    description="Acuerdo Anual 2025: Exhibición preferencial en góndola principal + 2 punteras. Descuento 15% en línea Photoderm.",
+                    is_active=True
+                )
 
             self.stdout.write(f"  -> Generando datos 2025 para: {name} ({segment}) - {pharm_territory.zone.name}")
 
             assigned_rep = rep_int if pharm_territory.zone.name in ["Córdoba", "Santa Fe", "Mendoza"] else rep_ba
+            
+            # Predictable product pattern for AI testing - DIVERSIFIED PER PHARMACY
+            # We rotate the product we want to trigger suggestions for based on pharmacy index
+            
+            # Products: 
+            # 0: Photoderm Max (Sun)
+            # 1: Photoderm Nude (Sun)
+            # 2: Sensibio H2O (Face)
+            # 3: Sebium Gel (Face)
+            # 4: Hydrabio Serum (Face)
+
+            idx_controlled = i % len(products) # Rotate 0..4
+            controlled_product = products[idx_controlled]
+            
+            # Different cycles and stop dates to make it look organic
+            # Cycle: 30 to 60 days
+            cycle_days = 30 + (i * 5) % 30  # 30, 35, 40, 45...
+            
+            # Stop date (Days ago): 40 to 100 days
+            # Must be > cycle_days to trigger alert
+            days_stopped = cycle_days + 15 + (i * 7) % 50
+            
+            last_controlled_date = None
 
             # Generar Ventas (Full Year 2025)
             for day_offset in range(delta_days):
                 current_date = start_date + timedelta(days=day_offset)
+                
+                # Logic for Controlled Product (AI Suggestion Trigger)
+                buy_controlled = False
+                
+                # Only buy if we are BEFORE the stop date
+                # Stop date is from END of year backwards? OR from TODAY?
+                # The logic uses 2025 full year. Let's assume "Today" is end of 2025 or we just simulate gaps.
+                # If we want a gap at the END of the data (Dec 31 2025), we stop N days before Delta.
+                
+                if (day_offset % cycle_days == 0) and (day_offset < delta_days - days_stopped): 
+                     buy_controlled = True
                 
                 is_summer = current_date.month in [1, 2, 12]
                 seasonality_factor = 1.5 if is_summer else 1.0
@@ -147,6 +194,10 @@ class Command(BaseCommand):
                 else:
                     num_tx = int(random.randint(0, 2) * seasonality_factor)
                 
+                # If we need to buy controlled product but rng gave 0 tx, force 1
+                if buy_controlled and num_tx == 0:
+                    num_tx = 1
+
                 for _ in range(num_tx):
                     tx_time = datetime.time(random.randint(9, 20), random.randint(0, 59))
                     tx_datetime = timezone.make_aware(datetime.datetime.combine(current_date, tx_time))
@@ -169,8 +220,22 @@ class Command(BaseCommand):
                     )
                     
                     total = 0
+                    
+                    # Add items
+                    items_to_add = []
+                    
+                    if buy_controlled:
+                        items_to_add.append(controlled_product)
+                        buy_controlled = False # Added once per day is enough
+                    
+                    # Add random other items
+                    # Exclude controlled product from random pool to protect the pattern
+                    random_pool = [p for p in products if p != controlled_product]
+                    
                     for _ in range(random.randint(1, 4)):
-                        prod = random.choice(products)
+                        items_to_add.append(random.choice(random_pool))
+
+                    for prod in items_to_add:
                         qty = random.randint(1, 3)
                         price = prod.demo_price
                         

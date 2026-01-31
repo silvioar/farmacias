@@ -23,7 +23,9 @@ from django.conf.urls.static import static
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("routes/", include("routes.urls")),
+    path("surveys/", include("surveys.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("ph360/", include("pages.urls")),
     path("", include("analytics.urls")),
 ]
 

@@ -1,0 +1,742 @@
+{% extends 'base.html' %}
+
+{% block sidebar %}
+{% endblock %}
+
+
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
+<div class="container-fluid px-4 pt-4">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'surveys:form_list' %}" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-muted); text-decoration: none; transition: color 0.2s;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Volver al Inicio
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Main Form Column -->
+        <div class="col-lg-8">
+            <div class="form-container">
+                <div class="form-header mb-4">
+                    <div>
+                        <h1>{{ form_def.title }}</h1>
+                        <p style="color: var(--text-muted);">{{ form_def.description }}</p>
+                    </div>
+                </div>
+
+                <div id="pharmacy-context-panel" class="context-panel mb-4" style="display: none;">
+                    <div class="panel-header d-flex justify-content-between align-items-center">
+                        <h3>
+                            Resumen 30 Días 
+                            <span id="ctx-pharmacy-name" class="subtitle" style="font-weight: 400; margin-left: 0.5rem; font-size: 1rem;">...</span>
+                        </h3>
+                        <button type="button" id="btn-view-agreement" class="btn-glass small" style="display: none;">
+                            📜 Acuerdo Comercial
+                        </button>
+                    </div>
+                    
+                    <div class="kpi-grid">
+                        <div class="kpi-item">
+                            <span class="label">Ventas Totales</span>
+                            <span class="value" id="ctx-total-sales">$0</span>
+                        </div>
+                        <div class="kpi-item">
+                            <span class="label">Pedidos</span>
+                            <span class="value" id="ctx-orders">0</span>
+                        </div>
+                    </div>
+
+                    <div class="top-products">
+                        <h4>Top Productos</h4>
+                        <ul id="ctx-top-products">
+                            <li>Sin datos recientes</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="ai-suggestions mt-3" id="ai-section" style="display: none;">
+                        <h4 style="color: var(--accent); display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🤖</span> Sugeridos por IA
+                        </h4>
+                        <ul id="ctx-ai-suggestions" class="suggestion-list">
+                            <!-- Populated by JS -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Agreement Modal -->
+                <div id="agreement-modal" class="modal-overlay" style="display: none;">
+                    <div class="modal-content glass-effect">
+                        <div class="modal-header">
+                            <h2>Acuerdo Comercial Vigente</h2>
+                            <button type="button" class="close-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="agreement-details">
+                                <div id="agreement-text"></div>
+                            </div>
+                            
+                            <div class="checklist-preview mt-4">
+                                <h4>Checklist Rápido</h4>
+                                <ul class="checklist">
+                                    <li><input type="checkbox" disabled> ¿Está exhibido según acuerdo?</li>
+                                    <li><input type="checkbox" disabled> ¿Precios visibles?</li>
+                                    <li><input type="checkbox" disabled> ¿Material POP presente?</li>
+                                </ul>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" class="glass-form">
+                    {% csrf_token %}
+
+                    <!-- Context: Pharmacy Selection -->
+                    <div class="form-section highlight">
+                        <label for="pharmacy_id" class="label-heading">Farmacia / PDV <span class="required">*</span></label>
+                        <div class="select-wrapper">
+                            <select name="pharmacy_id" id="pharmacy_id" class="custom-input" required>
+                                <option value="">Seleccione Farmacia...</option>
+                                {% for pharmacy in pharmacies %}
+                                <option value="{{ pharmacy.id }}">{{ pharmacy.display_name }} ({{ pharmacy.city }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <small class="helper-text">Seleccione la farmacia donde está realizando la visita.</small>
+                    </div>
+
+                    <!-- Dynamic Fields -->
+                    {% for field in fields %}
+                        
+                        {% if field.field_type == 'SECTION_HEADER' %}
+                            <div class="section-divider">
+                                <h3>{{ field.label }}</h3>
+                            </div>
+                        
+                        {% elif field.field_type == 'BOOL' %}
+                            <div class="form-group checkbox-group">
+                                <label class="custom-checkbox">
+                                    <input type="checkbox" id="{{ field.code }}" name="{{ field.code }}">
+                                    <span class="checkmark"></span>
+                                    <span class="checkbox-label">{{ field.label }} {% if field.required %}<span class="required">*</span>{% endif %}</span>
+                                </label>
+                            </div>
+
+                        {% elif field.field_type == 'SELECT' %}
+                            <div class="form-group">
+                                <label for="{{ field.code }}">{{ field.label }} {% if field.required %}<span class="required">*</span>{% endif %}</label>
+                                <div class="select-wrapper">
+                                    <select class="custom-input" id="{{ field.code }}" name="{{ field.code }}" {% if field.required %}required{% endif %}>
+                                        <option value="">Seleccionar...</option>
+                                        {% for option in field.catalog.options.all %}
+                                        <option value="{{ option.code }}">{{ option.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        
+                        {% elif field.field_type == 'MULTI_SELECT' %}
+                            <div class="form-group">
+                                <label class="field-label">{{ field.label }} {% if field.required %}<span class="required">*</span>{% endif %}</label>
+                                <div class="multi-select-grid">
+                                    {% for option in field.catalog.options.all %}
+                                    <label class="custom-checkbox small">
+                                        <input type="checkbox" id="{{ field.code }}_{{ option.code }}" name="{{ field.code }}" value="{{ option.code }}">
+                                        <span class="checkmark"></span>
+                                        <span class="checkbox-label">{{ option.label }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                        {% elif field.field_type == 'INT' %}
+                             <div class="form-group">
+                                <label for="{{ field.code }}">{{ field.label }} {% if field.required %}<span class="required">*</span>{% endif %}</label>
+                                <input type="number" class="custom-input" id="{{ field.code }}" name="{{ field.code }}" {% if field.min_value is not None %}min="{{ field.min_value }}"{% endif %} {% if field.max_value is not None %}max="{{ field.max_value }}"{% endif %} {% if field.required %}required{% endif %}>
+                            </div>
+                        
+                        {% elif field.field_type == 'PHOTO' %}
+                             <div class="form-group">
+                                <label>{{ field.label }}</label>
+                                <div class="file-drop-zone">
+                                    <span>Funcionalidad móvil</span>
+                                    <small>{{ field.help_text }}</small>
+                                </div>
+                            </div>
+
+                        {% else %}
+                            <!-- Default Text -->
+                            <div class="form-group">
+                                <label for="{{ field.code }}">{{ field.label }} {% if field.required %}<span class="required">*</span>{% endif %}</label>
+                                <input type="text" class="custom-input" id="{{ field.code }}" name="{{ field.code }}" {% if field.required %}required{% endif %}>
+                            </div>
+                        {% endif %}
+
+                    {% endfor %}
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">
+                            Finalizar Visita
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selector = document.getElementById('pharmacy_id');
+    const panel = document.getElementById('pharmacy-context-panel');
+    
+    // UI Elements
+    const elName = document.getElementById('ctx-pharmacy-name');
+    const elSales = document.getElementById('ctx-total-sales');
+    const elOrders = document.getElementById('ctx-orders');
+    const elProducts = document.getElementById('ctx-top-products');
+    
+    // Agreement UI
+    const btnAgreement = document.getElementById('btn-view-agreement');
+    const modal = document.getElementById('agreement-modal');
+    const modalText = document.getElementById('agreement-text');
+    const closeButtons = document.querySelectorAll('.close-modal');
+
+    // Close Modal Logic
+    closeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    });
+
+    // Close on outside click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+
+    selector.addEventListener('change', function() {
+        const pharmacyId = this.value;
+        if (!pharmacyId) {
+            panel.style.display = 'none';
+            btnAgreement.style.display = 'none';
+            return;
+        }
+
+        // Show loading state
+        panel.style.display = 'block';
+        elName.textContent = "Cargando...";
+        elName.style.opacity = "0.5";
+        btnAgreement.style.display = 'none'; // Hide until loaded
+
+        fetch(`/surveys/api/pharmacy-context/${pharmacyId}/`)
+            .then(response => response.json())
+            .then(data => {
+                console.log("Context Data Received:", data); // DEBUG
+                console.log("Has Agreement:", data.has_agreement);
+                console.log("Predictions:", data.predictions);
+
+                elName.textContent = data.pharmacy_name;
+                elName.style.opacity = "1";
+                
+                // Format Currency
+                elSales.textContent = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(data.total_sales);
+                elOrders.textContent = data.orders_count;
+
+                // Products
+                elProducts.innerHTML = '';
+                if (data.top_products.length > 0) {
+                    data.top_products.forEach(p => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<span>${p.product__name}</span> <strong>x${p.qty}</strong>`;
+                        elProducts.appendChild(li);
+                    });
+                } else {
+                    elProducts.innerHTML = '<li style="color:var(--text-muted)">Sin movimientos recientes</li>';
+                }
+
+                // Agreement Logic
+                if (data.has_agreement) {
+                    btnAgreement.style.display = 'block';
+                    // Parse Markdown to HTML
+                    modalText.innerHTML = marked.parse(data.agreement_summary);
+                    
+                    btnAgreement.onclick = () => {
+                        modal.style.display = 'flex';
+                    };
+                } else {
+                    btnAgreement.style.display = 'none';
+                }
+
+                // AI Predictions Logic
+                const aiSection = document.getElementById('ai-section');
+                const aiList = document.getElementById('ctx-ai-suggestions');
+                
+                aiList.innerHTML = '';
+                if (data.predictions && data.predictions.length > 0) {
+                    aiSection.style.display = 'block';
+                    data.predictions.forEach(pred => {
+                        const li = document.createElement('li');
+                        li.className = 'suggestion-item';
+                        li.innerHTML = `
+                            <div class="d-flex justify-content-between">
+                                <span class="prod-name">${pred.product_name}</span>
+                                <span class="badge-cycle">${pred.days_since_last} días sin pedir</span>
+                            </div>
+                            <small class="text-muted" style="display:block; font-size: 0.75rem;">${pred.reason}</small>
+                        `;
+                        aiList.appendChild(li);
+                    });
+                } else {
+                    aiSection.style.display = 'none';
+                }
+            })
+            .catch(err => {
+                console.error("Error fetching context:", err);
+                elName.textContent = "Error de conexión";
+            });
+    });
+});
+</script>
+
+<style>
+    /* Override base layout to remove sidebar gap */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .btn-link {
+        color: rgba(255,255,255,0.6) !important;
+        transition: color 0.2s;
+    }
+
+    .hover-white:hover {
+        color: white !important;
+    }
+
+    .form-container {
+        /* Remove max-width restriction inside columns */
+        width: 100%;
+    }
+
+    /* Context Panel Styles */
+    .context-panel {
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        backdrop-filter: blur(5px);
+    }
+
+    .modal-content.glass-effect {
+        background: rgba(30, 41, 59, 0.95);
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 2rem;
+        border-radius: 16px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 1rem;
+    }
+
+    /* Agreement Content Styles */
+    .agreement-details #agreement-text strong {
+        color: var(--primary);
+        font-weight: 600;
+        display: inline-block;
+        margin-top: 1rem;
+    }
+
+    .agreement-details #agreement-text ul {
+        padding-left: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .agreement-details #agreement-text li {
+        margin-bottom: 0.25rem;
+        color: var(--text-main);
+    }
+    
+    .agreement-details #agreement-text p {
+        margin-bottom: 0.5rem;
+    }
+
+    .modal-header h2 {
+        font-size: 1.5rem;
+        margin: 0;
+        color: var(--primary);
+    }
+
+    .close-modal {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    .checklist {
+        list-style: none;
+        padding: 0;
+    }
+
+    .checklist li {
+        margin-bottom: 0.5rem;
+        color: var(--text-muted);
+    }
+
+    .btn-glass.small {
+        padding: 0.4rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .panel-header {
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* AI Suggestions */
+    .suggestion-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .suggestion-item {
+        background: rgba(var(--accent-rgb), 0.1); /* Assuming accent color exists or fallback */
+        background: rgba(139, 92, 246, 0.1); /* Violet tint */
+        border-left: 3px solid #8b5cf6;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+    }
+    .badge-cycle {
+        color: #ff9f43; /* Orange for warning */
+        font-weight: bold;
+        font-size: 0.8rem;
+    }
+
+    .panel-header h3 {
+        font-size: 1.2rem;
+        color: var(--primary);
+        margin: 0;
+    }
+
+    .panel-header .subtitle {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
+    }
+
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .kpi-item {
+        background: rgba(255,255,255,0.03);
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .kpi-item .label {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .kpi-item .value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    .top-products h4 {
+        font-size: 1rem;
+        color: var(--secondary);
+        margin-bottom: 1rem;
+    }
+
+    .top-products ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .top-products li {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        font-size: 0.9rem;
+    }
+
+    .top-products li:last-child {
+        border-bottom: none;
+    }
+
+    .form-header {
+        display: block;
+        margin-bottom: 2rem;
+    }
+
+    .glass-form {
+        background: var(--bg-card);
+        border: var(--glass-border);
+        border-radius: var(--radius);
+        padding: 2rem;
+        box-shadow: var(--glass-shadow);
+        backdrop-filter: blur(12px);
+        margin-top: 3rem;
+    }
+
+    .form-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .highlight {
+        background: rgba(56, 189, 248, 0.05); /* very light primary tint */
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px dashed rgba(56, 189, 248, 0.3);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    label {
+        display: block;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+    
+    .label-heading {
+        color: var(--primary);
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .custom-input {
+        width: 100%;
+        background: rgba(15, 23, 42, 0.6); /* Slightly darker than card */
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 0.8rem 1rem;
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 1rem;
+        transition: all 0.2s;
+    }
+
+    .custom-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        background: rgba(15, 23, 42, 0.8);
+    }
+
+    /* Custom Checkbox */
+    .checkbox-group {
+        margin: 1.5rem 0;
+    }
+
+    .custom-checkbox {
+        display: flex;
+        align-items: center;
+        position: relative;
+        padding-left: 35px;
+        cursor: pointer;
+        user-select: none;
+        color: var(--text-main);
+    }
+
+    .custom-checkbox input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+
+    .checkmark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 24px;
+        width: 24px;
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+
+    .custom-checkbox:hover input ~ .checkmark {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .custom-checkbox input:checked ~ .checkmark {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .checkmark:after {
+        content: "";
+        position: absolute;
+        display: none;
+    }
+
+    .custom-checkbox input:checked ~ .checkmark:after {
+        display: block;
+    }
+
+    .custom-checkbox .checkmark:after {
+        left: 8px;
+        top: 4px;
+        width: 6px;
+        height: 12px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+    
+    .multi-select-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        background: rgba(0,0,0,0.2);
+        padding: 1rem;
+        border-radius: 8px;
+    }
+
+    .section-divider {
+        margin: 2.5rem 0 1.5rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 0.5rem;
+    }
+
+    .section-divider h3 {
+        color: var(--text-main);
+        font-size: 1.25rem;
+        margin: 0;
+    }
+
+    .required {
+        color: var(--accent);
+    }
+    
+    .helper-text {
+        display: block;
+        margin-top: 0.5rem;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    /* File Input Placeholder */
+    .file-drop-zone {
+        border: 2px dashed rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        color: var(--text-muted);
+        background: rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: not-allowed;
+    }
+
+    .form-actions {
+        margin-top: 3rem;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        padding-top: 2rem;
+    }
+
+    .btn-submit {
+        width: 100%;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border: none;
+        padding: 1rem;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(56, 189, 248, 0.4);
+    }
+    
+    .btn-glass {
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        text-decoration: none;
+        color: var(--text-main);
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-glass:hover {
+        background: rgba(255,255,255,0.1);
+        color: white;
+    }
+</style>
+{% endblock %}

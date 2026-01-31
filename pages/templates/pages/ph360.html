@@ -1,0 +1,446 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ph360 - Plataforma Integral de Ejecución Comercial</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #38bdf8;
+            --secondary: #818cf8;
+            --accent: #f472b6;
+            --gradient-primary: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4 {
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        h1 { font-size: 3.5rem; }
+        h2 { font-size: 2.5rem; color: var(--primary); }
+        h3 { font-size: 1.75rem; color: var(--text-main); }
+
+        p { color: var(--text-muted); font-size: 1.125rem; margin-bottom: 1.5rem; }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(244, 114, 182, 0.15) 0%, transparent 40%);
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2338bdf8' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 10;
+            max-width: 600px;
+        }
+
+        .hero-title {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-image {
+            position: absolute;
+            right: -50px;
+            top: 50%;
+            transform: translateY(-50%) perspective(1000px) rotateY(-15deg);
+            width: 500px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: var(--glass-border);
+            z-index: 1;
+            transition: transform 0.5s ease;
+            opacity: 0.7;
+        }
+
+        .hero-image:hover {
+            transform: translateY(-50%) perspective(1000px) rotateY(-5deg);
+        }
+
+        /* Content Sections */
+        .section {
+            padding: 8rem 0;
+            position: relative;
+        }
+
+        .section-dark {
+            background: rgba(0,0,0,0.2);
+        }
+
+        .grid {
+            display: grid;
+            gap: 4rem;
+        }
+
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: var(--glass-border);
+            border-radius: 1rem;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            background: rgba(56, 189, 248, 0.1);
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+
+        /* Lists */
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+
+        .checklist li {
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-main);
+        }
+
+        .checklist li i {
+            color: var(--success, #34d399);
+        }
+
+        /* Quote */
+        .quote-box {
+            border-left: 4px solid var(--accent);
+            padding-left: 1.5rem;
+            margin: 2rem 0;
+            font-style: italic;
+            font-size: 1.25rem;
+            color: var(--text-main);
+            background: linear-gradient(90deg, rgba(244, 114, 182, 0.1), transparent);
+            padding: 2rem;
+            border-radius: 0 1rem 1rem 0;
+        }
+
+        .highlight {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Ecosystem */
+        .ecosystem-img {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            display: block;
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(56, 189, 248, 0.1);
+        }
+        
+        /* Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 2rem;
+        }
+        
+        .comparison-table th, .comparison-table td {
+            padding: 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .comparison-table th {
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+        
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .comparison-table tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.6);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 900px) {
+            h1 { font-size: 2.5rem; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .hero-image { display: none; }
+            .hero-content { max-width: 100%; text-align: center; }
+            .quote-box { text-align: left; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hero -->
+    <header class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <span style="color: var(--accent); font-weight: 600; letter-spacing: 2px; text-transform: uppercase;">Introducing</span>
+                <h1 class="hero-title">Ph360</h1>
+                <p>La Plataforma Integral de Ejecución Comercial definitiva para la Industria Farmacéutica.</p>
+                <div style="margin-top: 2rem;">
+                    <a href="#problem" class="btn btn-primary">Descubrir Más</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- The Problem (Bagó Case) -->
+    <section id="problem" class="section">
+        <div class="container">
+            <div class="grid-2">
+                <div>
+                    <h2>El Origen: Un Problema Real</h2>
+                    <p>La concepción de <strong>Ph360</strong> no surge de una idea teórica, sino de un problema recurrente que es representativo de toda la industria.</p>
+                    
+                    <div class="card" style="margin-top: 2rem;">
+                        <h3>El Escenario Inicial</h3>
+                        <p>El circuito parecía completo: <em>Campo → Formulario → Dashboard</em>. Sin embargo, en la práctica aparecen bloqueos críticos.</p>
+                        <ul class="checklist" style="margin-top: 1rem;">
+                            <li><i class="fas fa-times" style="color: var(--danger, #f87171);"></i> Datos no parametrizados (texto libre)</li>
+                            <li><i class="fas fa-times" style="color: var(--danger, #f87171);"></i> Errores de carga y ambigüedad</li>
+                            <li><i class="fas fa-times" style="color: var(--danger, #f87171);"></i> Pérdida de tiempo limpiando datos</li>
+                        </ul>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <div class="quote-box">
+                        "Un buen dashboard no puede compensar una mala captura de datos. Si el dato nace mal, el sistema completo se vuelve frágil."
+                    </div>
+                    <p>Esta lección fue el catalizador para el desarrollo de Ph360: <strong>No separar más la captura de datos del análisis.</strong></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Solution -->
+    <section class="section section-dark">
+        <div class="container">
+            <div style="text-align: center; max-width: 800px; margin: 0 auto 4rem;">
+                <h2>El Nacimiento de Ph360</h2>
+                <p>Un sistema que guía al visitador para que el dato nazca bien desde el origen.</p>
+                <img src="{{ MEDIA_URL }}ph360/portada.webp" alt="Ph360 Dashboard" style="width: 100%; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: var(--glass-border); margin-top: 2rem;">
+            </div>
+
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-check-circle"></i></div>
+                    <h3>Formularios Parametrizados</h3>
+                    <p>Opciones cerradas, catálogos normalizados y validaciones automáticas eliminan la ambigüedad.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-brain"></i></div>
+                    <h3>Lógica de Negocio</h3>
+                    <p>El formulario se adapta dinámicamente y evita errores antes de que ocurran.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+                    <h3>Foco en Estrategia</h3>
+                    <p>Marketing deja de limpiar datos y empieza a analizar desde el día uno.</p>
+                </div>
+            </div>
+
+            <div class="quote-box" style="text-align: center; margin-top: 4rem; border-left: none; border-bottom: 4px solid var(--accent);">
+                RESULTADO CONCEPTUAL: <br>
+                <span style="font-size: 1.5rem; color: white; display: block; margin-top: 1rem;">Formulario Inteligente → Ejecución Guiada → Dashboard Confiable</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Ecosystem -->
+    <section class="section">
+        <div class="container">
+            <div class="grid-2" style="align-items: center;">
+                
+                <div>
+                    <h2 style="margin-bottom: 2rem;">El Ecosistema</h2>
+                    
+                    <div style="margin-bottom: 2rem;">
+                        <h3>1. Formularios Inteligentes + IA</h3>
+                        <p>No son simples encuestas. Son guías de trabajo que se adaptan al contexto de la farmacia (quiebres, competencia, oportunidades).</p>
+                    </div>
+
+                    <div style="margin-bottom: 2rem;">
+                        <h3>2. Rutas Inteligentes</h3>
+                        <p>Organiza el día del visitador. Sugiere qué farmacias visitar según prioridad, historial y alertas de quiebre. Más visitas útiles.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="section">
+         <div class="container">
+            <div class="grid-2" style="align-items: center;">
+                 <div>
+                    <h2 style="margin-bottom: 2rem;">Dashboard Integral & Alertas</h2>
+                    
+                    <div style="margin-bottom: 2rem;">
+                        <h3>No solo mira, OPERA.</h3>
+                        <p>A diferencia de Power BI estático, Ph360 dispara <strong>alertas automáticas</strong>. Si hay un quiebre crítico, el sistema avisa al visitador en tiempo real.</p>
+                    </div>
+
+                    <div style="margin-bottom: 2rem;">
+                        <h3>Alertas Accionables</h3>
+                        <p>En lugar de "120 problemas", el sistema entrega "3 acciones prioritarias para hoy". Prevenimos la pérdida de venta antes de que impacte el cierre de mes.</p>
+                    </div>
+                </div>
+                <img src="{{ MEDIA_URL }}ph360/arg.png" alt="Dashboard" style="width: 100%; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison -->
+    <section class="section section-dark">
+        <div class="container">
+            <h2 style="text-align: center;">Ventaja Competitiva</h2>
+            <div class="card" style="margin-top: 2rem; overflow-x: auto;">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Aspecto</th>
+                            <th>Power BI Tradicional</th>
+                            <th>Ph360</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Rol</strong></td>
+                            <td>Analiza lo que pasó</td>
+                            <td class="highlight">Analiza + Ejecuta en tiempo real</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Campo</strong></td>
+                            <td>No participa</td>
+                            <td class="highlight">Es protagonista</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rutas</strong></td>
+                            <td>No</td>
+                            <td class="highlight">Sí (Optimizadas)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Acciones</strong></td>
+                            <td>Manuales</td>
+                            <td class="highlight">Sugeridas / Alertas Automáticas</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- CRM Section -->
+    <section class="section">
+         <div class="container">
+            <div class="grid-2" style="align-items: center;">
+                <img src="{{ MEDIA_URL }}ph360/routes.png" alt="CRM View" style="width: 100%; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+                <div>
+                    <h2>Ph360 como CRM Operativo</h2>
+                    <p>Convertimos la base de datos estática en un sistema vivo.</p>
+
+                    <ul class="checklist">
+                        <li><i class="fas fa-check"></i> <strong>La Farmacia como Eje:</strong> Ficha única con historial completo.</li>
+                        <li><i class="fas fa-check"></i> <strong>Trazabilidad:</strong> Sabemos de qué visita y formulario sale cada KPI.</li>
+                        <li><i class="fas fa-check"></i> <strong>Transparencia:</strong> El dashboard deja de ser una "caja negra".</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1.5rem;">Marketing deja de interpretar datos y empieza a tomar decisiones.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="background: rgba(15, 23, 42, 0.95); padding: 4rem 0; border-top: var(--glass-border); text-align: center;">
+        <div class="container">
+            <h2 style="margin-bottom: 2rem;">Ph360</h2>
+            <p>"Sabemos qué hacer hoy, dónde y por qué."</p>
+            <div style="margin-top: 2rem;">
+                 <a href="{% url 'analytics:home' %}" class="btn" style="border: 1px solid var(--text-muted); color: var(--text-main);">Volver al Dashboard</a>
+            </div>
+            <p style="margin-top: 4rem; font-size: 0.9rem; color: var(--text-muted);">© 2026 Ph360. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

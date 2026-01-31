@@ -95,7 +95,7 @@
         
         <!-- Card 1: Formulario Visitas -->
         {% if perms.analytics.view_visits or user.is_superuser %}
-        <a href="{% url 'analytics:form_list' %}" class="home-card">
+        <a href="{% url 'surveys:form_list' %}" class="home-card">
             <div class="card-icon" style="color: var(--info);">📝</div>
             <h2>Formulario de Visitas</h2>
             <p>Nuevo Relevamiento</p>

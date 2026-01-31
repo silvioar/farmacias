@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block sidebar %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 pt-4">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'surveys:submission_list' %}" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-muted); text-decoration: none; transition: color 0.2s;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Volver al Inicio
+        </a>
+    </div>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="h2 mb-2 text-white font-weight-bold">Detalle de Visita</h1>
+            <p class="text-muted mb-0" style="font-family: monospace;">ID: {{ submission.id }}</p>
+        </div>
+    </div>
+
+    <!-- Metadata Card -->
+    <div class="glass-card mb-5">
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-borderless text-left mb-0" style="color: var(--text-main);">
+                    <thead>
+                        <tr>
+                            <th class="text-muted small text-uppercase font-weight-bold pb-2" style="width: 25%;">Farmacia</th>
+                            <th class="text-muted small text-uppercase font-weight-bold pb-2" style="width: 25%;">Visitador</th>
+                            <th class="text-muted small text-uppercase font-weight-bold pb-2" style="width: 25%;">Fecha</th>
+                            <th class="text-muted small text-uppercase font-weight-bold pb-2" style="width: 25%;">Formulario</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="pt-2">
+                                <div class="font-weight-bold text-white h5 mb-1">{{ submission.visit.pharmacy.display_name }}</div>
+                                <div class="text-muted small">{{ submission.visit.pharmacy.address }}</div>
+                            </td>
+                            <td class="pt-2">
+                                <div class="font-weight-bold text-white mb-1">{{ submission.visit.rep.user.get_full_name|default:submission.visit.rep.user.username }}</div>
+                                <div class="text-muted small">ID: {{ submission.visit.rep.external_id }}</div>
+                            </td>
+                            <td class="pt-2">
+                                <div class="font-weight-bold text-white mb-1">{{ submission.visit.completed_at|date:"d/m/Y" }}</div>
+                                <div class="text-muted small">{{ submission.visit.completed_at|date:"H:i" }} hs</div>
+                            </td>
+                            <td class="pt-2">
+                                <div class="d-block">
+                                     <span class="badge badge-success px-2 py-1">{{ submission.form_definition.title }} v{{ submission.form_definition.version }}</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Answers List -->
+    <div class="glass-card">
+        <div class="card-header border-bottom border-secondary p-3">
+            <h5 class="m-0 text-white">Respuestas Registradas</h5>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0" style="color: var(--text-main);">
+                <tbody>
+                    {% for answer in answers %}
+                    <tr>
+                        <td width="50%" class="pl-4 py-3 border-secondary">
+                            <span class="font-weight-500 text-white">{{ answer.field_definition.label }}</span>
+                        </td>
+                        <td width="50%" class="py-3 border-secondary">
+                            {% if answer.field_definition.field_type == 'BOOL' %}
+                                {% if answer.raw_value == 'true' %}
+                                    <span class="badge badge-success">SÍ</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">NO</span>
+                                {% endif %}
+                            
+                            {% elif answer.field_definition.field_type == 'PHOTO' %}
+                                {% if answer.evidence.first %}
+                                    <a href="{{ answer.evidence.first.file.url }}" target="_blank" class="btn btn-sm btn-outline-info">Ver Foto</a>
+                                {% else %}
+                                    <span class="text-muted font-italic">Sin foto (Simulado)</span>
+                                {% endif %}
+
+                            {% elif answer.field_definition.field_type == 'MULTI_SELECT' %}
+                                <!-- Logic to split or show raw value nicely -->
+                                <span class="text-info">{{ answer.raw_value }}</span>
+
+                            {% else %}
+                                <span class="text-white">{{ answer.raw_value }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    /* Override base layout to remove sidebar gap */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .btn-link {
+        color: rgba(255,255,255,0.6) !important;
+        transition: color 0.2s;
+    }
+
+    .hover-white:hover {
+        color: white !important;
+    }
+
+    /* Force margin bottom if bootstrap utility fails/overridden */
+    .mb-5 {
+        margin-bottom: 3rem !important;
+    }
+
+    .glass-card {
+        background: var(--bg-card);
+        border: var(--glass-border);
+        border-radius: var(--radius);
+        box-shadow: var(--glass-shadow);
+        backdrop-filter: blur(12px);
+        overflow: hidden;
+    }
+    
+    .border-secondary {
+        border-color: rgba(255,255,255,0.1) !important;
+    }
+
+    .btn-glass {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        color: var(--text-main);
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-glass:hover {
+        background: rgba(255,255,255,0.1);
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Responsive Border - REMOVED preferring grid cards */
+    
+    .metadata-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2rem;
+        align-items: start;
+    }
+    
+    @media (max-width: 992px) {
+        .metadata-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .metadata-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .glass-item {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 12px;
+        transition: transform 0.2s;
+    }
+    .glass-item:hover {
+        background: rgba(255,255,255,0.06);
+        transform: translateY(-2px);
+    }
+
+    .icon-box {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+    .bg-primary-soft { background: rgba(56, 189, 248, 0.15); }
+    .bg-info-soft { background: rgba(129, 140, 248, 0.15); }
+    .bg-warning-soft { background: rgba(251, 191, 36, 0.15); }
+    .bg-success-soft { background: rgba(52, 211, 153, 0.15); }
+
+</style>
+{% endblock %}

@@ -14,9 +14,7 @@ urlpatterns = [
     path('farmacias/', views.PharmacyListView.as_view(), name='pharmacy_list'),
     path('productos/', views.ProductListView.as_view(), name='product_list'),
     path('reportes/detallado/', views.OrderMasterListView.as_view(), name='order_master_list'),
-    path('formularios/', views.FormListView.as_view(), name='form_list'),
-    path('formularios/<str:code>/llenar/', views.FormFillView.as_view(), name='form_fill'),
-    path('formularios/respuestas/', views.SubmissionListView.as_view(), name='submission_list'),
-    path('formularios/respuestas/<uuid:pk>/', views.SubmissionDetailView.as_view(), name='submission_detail'),
+    # Form URLs moved to surveys app
+
     path('configuracion/perfil/', views.UserProfileView.as_view(), name='profile'),
 ]
