@@ -5,6 +5,13 @@
         margin-left: 0 !important;
         width: 100% !important;
     }
+    @media (max-width: 768px) {
+        h1 { margin-bottom: 1rem !important; }
+        div[style*="space-between"] {
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -23,8 +30,8 @@
         <a href="{% url 'analytics:user_create' %}" class="badge badge-A" style="font-size: 1rem; text-decoration: none; padding: 0.75rem 1.5rem;">+ Crear Usuario</a>
     </div>
 
-    <div class="card" style="padding: 0;">
-        <table style="width: 100%; border-collapse: collapse;">
+    <div class="card" style="padding: 0; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
             <thead>
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
                     <th style="padding: 1.5rem; text-align: left;">Usuario</th>

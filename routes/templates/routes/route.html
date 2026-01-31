@@ -50,6 +50,31 @@
         box-shadow: -4px 0 24px rgba(0,0,0,0.2);
     }
 
+    /* Mobile Responsive Route Layout */
+    @media (max-width: 768px) {
+        .route-layout {
+            flex-direction: column;
+        }
+        
+        .map-panel {
+            height: 40vh; /* Map takes top 40% */
+            order: 1;
+        }
+        
+        .control-panel {
+            width: 100%;
+            height: 60vh; /* Controls take bottom 60% */
+            order: 2;
+            border-left: none;
+            border-top: var(--glass-border);
+        }
+        
+        .results-area {
+            /* Ensure scrolling works well on mobile touch */
+            -webkit-overflow-scrolling: touch;
+        }
+    }
+
     /* Header in Panel */
     .panel-header {
         padding: 1.5rem;

@@ -241,6 +241,50 @@
             margin-bottom: 2rem;
         }
 
+        /* Mobile Responsive Adjustments */
+        @media (max-width: 768px) {
+            .grid-4, .grid-2 {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
+                width: 100% !important;
+                padding: 1rem !important;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px; /* Slightly wider for better touch targets */
+                box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            h1 {
+                font-size: 1.75rem; /* Smaller headings on mobile */
+            }
+            
+            .card {
+                padding: 1rem; /* Less padding on mobile cards */
+            }
+            
+            /* Ensure tables scroll horizontally */
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Sidebar Toggle Button for Mobile */
+            #sidebarToggle {
+                position: fixed; /* Keep it fixed */
+                left: 1rem;
+                top: 1rem;
+            }
+        }
+
         /* KPI Specifics */
         .kpi-value {
             font-size: 2.5rem;
@@ -371,11 +415,26 @@
 
             if(toggleBtn) {
                 toggleBtn.addEventListener('click', () => {
-                    sidebar.classList.toggle('closed');
-                    mainContent.classList.toggle('expanded');
-                    localStorage.setItem('sidebarClosed', sidebar.classList.contains('closed'));
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.toggle('mobile-open');
+                        // Overlay handling could be added here
+                    } else {
+                        sidebar.classList.toggle('closed');
+                        mainContent.classList.toggle('expanded');
+                        localStorage.setItem('sidebarClosed', sidebar.classList.contains('closed'));
+                    }
                 });
             }
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768 && 
+                    sidebar.classList.contains('mobile-open') && 
+                    !sidebar.contains(e.target) && 
+                    !toggleBtn.contains(e.target)) {
+                    sidebar.classList.remove('mobile-open');
+                }
+            });
 
             // Init Tom Select on all selects with class 'tom-select'
             document.querySelectorAll('.tom-select').forEach((el) => {

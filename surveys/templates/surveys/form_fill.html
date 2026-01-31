@@ -474,6 +474,31 @@ document.addEventListener('DOMContentLoaded', function() {
         margin-bottom: 2rem;
     }
 
+    @media (max-width: 768px) {
+        .kpi-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .panel-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .glass-form {
+            padding: 1.5rem;
+        }
+        
+        .form-header h1 {
+            font-size: 1.75rem;
+        }
+        
+        /* Ensure inputs like Tom Select don't overflow */
+        .select-wrapper {
+            max-width: 100%;
+        }
+    }
+
     .kpi-item {
         background: rgba(255,255,255,0.03);
         padding: 1rem;

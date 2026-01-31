@@ -246,6 +246,16 @@
             .hero-content { max-width: 100%; text-align: center; }
             .quote-box { text-align: left; }
         }
+        
+        @media (max-width: 600px) {
+             .hero-title { font-size: 2.5rem; }
+             h1 { font-size: 2rem; }
+             h2 { font-size: 1.75rem; }
+             .section { padding: 4rem 0; }
+             .card { padding: 1.5rem; }
+             .quote-box { padding: 1.5rem; }
+             .container { padding: 0 1.5rem; }
+        }
     </style>
 </head>
 <body>
@@ -373,8 +383,8 @@
     <section class="section section-dark">
         <div class="container">
             <h2 style="text-align: center;">Ventaja Competitiva</h2>
-            <div class="card" style="margin-top: 2rem; overflow-x: auto;">
-                <table class="comparison-table">
+            <div class="card" style="margin-top: 2rem; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                <table class="comparison-table" style="min-width: 500px;">
                     <thead>
                         <tr>
                             <th>Aspecto</th>
